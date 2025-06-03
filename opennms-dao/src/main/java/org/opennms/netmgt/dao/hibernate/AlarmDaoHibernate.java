@@ -48,7 +48,11 @@ import org.opennms.netmgt.model.OnmsServiceType;
 import org.opennms.netmgt.model.OnmsSeverity;
 import org.opennms.netmgt.model.alarm.AlarmSummary;
 import org.opennms.netmgt.model.alarm.SituationSummary;
+// import org.opennms.netmgt.model.OnmsSituation; // Placeholder for Situation entity
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.orm.hibernate3.HibernateCallback;
+// import javax.persistence.EntityNotFoundException; // Or a custom AlarmNotFoundException
 
 import com.google.common.collect.Lists;
 
@@ -59,6 +63,8 @@ import com.google.common.collect.Lists;
  * @version $Id: $
  */
 public class AlarmDaoHibernate extends AbstractDaoHibernate<OnmsAlarm, Integer> implements AlarmDao {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AlarmDaoHibernate.class);
 
     public AlarmDaoHibernate() {
         super(OnmsAlarm.class);
@@ -276,5 +282,60 @@ public class AlarmDaoHibernate extends AbstractDaoHibernate<OnmsAlarm, Integer> 
                 return q.list();
             }
         });
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void createSituationForAlarm(String alarmId, String situationDetails) {
+        LOG.info("Attempting to create situation for alarm ID: {} with details: {}", alarmId, situationDetails);
+
+        OnmsAlarm alarm = null;
+        try {
+            // Assuming alarmId is the string representation of the alarm's integer ID.
+            // Adjust if alarmId has a different meaning (e.g., reduction key).
+            Integer numericAlarmId = Integer.parseInt(alarmId);
+            alarm = get(numericAlarmId); // 'get' is a method from AbstractDaoHibernate
+            if (alarm == null) {
+                LOG.warn("Alarm with ID {} not found.", numericAlarmId);
+                // Consider throwing a specific AlarmNotFoundException here
+                throw new IllegalArgumentException("Alarm with ID " + numericAlarmId + " not found.");
+            }
+        } catch (NumberFormatException e) {
+            LOG.error("Invalid alarmId format: {}. Must be an integer.", alarmId, e);
+            throw new IllegalArgumentException("Invalid alarmId format: " + alarmId + ". Must be an integer.", e);
+        }
+
+        LOG.debug("Found alarm: {}", alarm);
+
+        // Placeholder for creating/updating and associating the situation
+        // In a real implementation, this would involve:
+        // 1. Creating or fetching an OnmsSituation entity:
+        //    OnmsSituation situation = new OnmsSituation(); // Or fetch existing
+        //    situation.setDetails(situationDetails);
+        //    situation.setTimestamp(new Date()); // Or some other relevant timestamp
+        //    // Potentially link it to the alarm directly if the model supports it
+        //    // alarm.setSituation(situation); or situation.setAlarm(alarm);
+
+        // 2. Persisting the situation and the alarm (if modified):
+        //    getSession().saveOrUpdate(situation); // Or use a specific SituationDao
+        //    getSession().update(alarm); // If alarm entity was changed
+        //    LOG.info("Situation entity created/updated for alarm ID: {}", alarmId);
+
+        // 3. For now, we just log the action.
+        LOG.info("Placeholder: Situation with details '{}' would be associated with alarm ID {}.", situationDetails, alarmId);
+
+        // Example of how it might look if there's a direct relationship or a join table
+        // For instance, if OnmsAlarm has a field like 'situationDetails':
+        // alarm.setSituationDetails(situationDetails); // Assuming such a field exists
+        // update(alarm); // Persist changes to the alarm
+
+        // Or if there's a separate OnmsSituation entity linked to OnmsAlarm:
+        // OnmsSituation situation = new OnmsSituation();
+        // situation.setAlarm(alarm); // Link to the alarm
+        // situation.setDetails(situationDetails);
+        // situation.setCreationTime(new Date());
+        // getSession().save(situation); // Persist the new situation
+
+        LOG.info("Successfully processed createSituationForAlarm for alarm ID: {} (current implementation is a placeholder).", alarmId);
     }
 }
