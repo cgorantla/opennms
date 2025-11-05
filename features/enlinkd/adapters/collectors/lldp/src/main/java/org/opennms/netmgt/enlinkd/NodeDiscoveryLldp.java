@@ -28,6 +28,7 @@ import org.opennms.netmgt.enlinkd.service.api.Node;
 import org.opennms.netmgt.enlinkd.snmp.LldpLocPortGetter;
 import org.opennms.netmgt.enlinkd.snmp.LldpLocalGroupTracker;
 import org.opennms.netmgt.enlinkd.snmp.LldpRemTableTracker;
+import org.opennms.netmgt.enlinkd.snmp.LldpSnmpUtils;
 import org.opennms.netmgt.enlinkd.snmp.MtxrLldpRemTableTracker;
 import org.opennms.netmgt.enlinkd.snmp.LldpLocalTableTracker;
 import org.opennms.netmgt.enlinkd.snmp.MtxrNeighborTableTracker;
@@ -253,7 +254,7 @@ public final class NodeDiscoveryLldp extends NodeCollector {
 
         for (MtxrLldpRemTableTracker.MtxrLldpRemRow mtxrLldpRemRow : mtxrlldprowss) {
             m_lldpTopologyService.store(getNodeId(),
-                    LldpLocalTableTracker.getLldpLink(
+                    LldpSnmpUtils.getLldpLink(
                             mtxrLldpRemRow,
                             mtxrNeighborMap.get(mtxrLldpRemRow.getMtxrNeighborIndex()),
                             mtxrLldpLocalPortMap
@@ -302,7 +303,12 @@ public final class NodeDiscoveryLldp extends NodeCollector {
     }
 
     private void storeLldpLinks(List<LldpRemTableTracker.LldpRemRow> links, final LldpLocPortGetter lldpLocPortGetter) {
+        LOG.debug("storeLldpLinks: parsing {}", links.size());
         for (LldpRemTableTracker.LldpRemRow row : links) {
+            if (row.getLldpRemChassisId() == null || row.getLldpRemChassisId().isNull()) {
+                LOG.warn("storeLldpLinks: skipping row {}", row);
+                continue;
+            }
             m_lldpTopologyService.store(getNodeId(), lldpLocPortGetter.getLldpLink(row));
         }
     }

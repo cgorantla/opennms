@@ -42,10 +42,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opennms.netmgt.flows.api.Flow;
 import org.opennms.netmgt.telemetry.protocols.netflow.adapter.common.NetflowMessage;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.InvalidPacketException;
+import org.opennms.netmgt.telemetry.protocols.netflow.parser.ie.InformationElementDatabase;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.netflow9.proto.Header;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.netflow9.proto.Packet;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.session.SequenceNumberTracker;
@@ -58,6 +60,13 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 public class Netflow9ConverterTest {
+
+    private InformationElementDatabase database = new InformationElementDatabase(new org.opennms.netmgt.telemetry.protocols.netflow.parser.ipfix.InformationElementProvider(), new org.opennms.netmgt.telemetry.protocols.netflow.parser.netflow9.InformationElementProvider());
+
+    @BeforeClass
+    public static void beforeClass() {
+        System.setProperty("karaf.etc", "src/test/resources");
+    }
 
     @Test
     public void canParseNetflow9Flows() {
@@ -107,7 +116,7 @@ public class Netflow9ConverterTest {
             final Header header;
             try {
                 header = new Header(slice(buffer, Header.SIZE));
-                final Packet packet = new Packet(session, header, buffer);
+                final Packet packet = new Packet(database, session, header, buffer);
                 packet.getRecords().forEach(rec -> {
                     final FlowMessage flowMessage = new Netflow9MessageBuilder().buildMessage(rec, (address) -> Optional.empty()).build();
                     flows.add(new NetflowMessage(flowMessage, Instant.now()));

@@ -22,6 +22,7 @@
 package org.opennms.features.vaadin.dashboard.ui;
 
 import com.google.common.base.Strings;
+import com.vaadin.shared.ui.MarginInfo;
 import org.opennms.features.vaadin.dashboard.config.DashletSelector;
 import org.opennms.features.vaadin.dashboard.config.ui.WallboardProvider;
 import org.opennms.features.vaadin.dashboard.model.DashletSelectorAccess;
@@ -82,7 +83,15 @@ public class WallboardUI extends UI implements DashletSelectorAccess {
         rootLayout.setSizeFull();
         rootLayout.setSpacing(true);
         rootLayout.setMargin(false);
+
         HeaderLayout headerLayout = new HeaderLayout();
+        MarginInfo headerMargin = headerLayout.getMargin();
+        MarginInfo newMargin = new MarginInfo(
+                true,
+                headerMargin.hasRight(),
+                headerMargin.hasBottom(),
+                headerMargin.hasLeft());
+        headerLayout.setMargin(newMargin);
         rootLayout.addComponent(headerLayout);
 
         VerticalLayout portalWrapper = new VerticalLayout();
@@ -93,8 +102,9 @@ public class WallboardUI extends UI implements DashletSelectorAccess {
         rootLayout.setExpandRatio(portalWrapper, 1);
         setContent(rootLayout);
 
-        Navigator navigator = new Navigator(this, portalWrapper);
+        addVueMenu();
 
+        Navigator navigator = new Navigator(this, portalWrapper);
         navigator.addView("dashboard", DashboardView.class);
         navigator.addView("wallboard", WallboardView.class);
 
@@ -122,5 +132,31 @@ public class WallboardUI extends UI implements DashletSelectorAccess {
                 }
             }
         }
+    }
+
+    private void addVueMenu() {
+        // Add stylesheet for Vue side menu to <head> element
+        // <link rel="stylesheet" href="${baseHref}/opennms/ui-components/assets/index.css" media="screen" />
+        this.getPage().getJavaScript().execute(
+            "var link = document.createElement('link');" +
+            "link.rel = \"stylesheet\";" +
+            "link.type = \"text/css\";" +
+            "link.media = \"screen\";" +
+            "link.href = \"/opennms/ui-components/assets/index.css\"; " +
+            "document.head.appendChild(link);"
+        );
+
+        // Add Vue menu mount div and script reference
+        // <div id="opennms-sidemenu-container"></div>
+        // <script type="module" src="${baseHref}/opennms/ui-components/assets/index.js"></script>
+        this.getPage().getJavaScript().execute(
+            "var div = document.createElement('div');" +
+            "div.id = \"opennms-sidemenu-container\";" +
+            "document.body.appendChild(div);" +
+            "var s = document.createElement('script');" +
+            "s.type = \"module\";" +
+            "s.src = \"/opennms/ui-components/assets/index.js\";" +
+            "document.body.appendChild(s);"
+        );
     }
 }

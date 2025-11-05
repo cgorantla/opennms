@@ -25,8 +25,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.opennms.netmgt.telemetry.listeners.utils.BufferUtils.slice;
 
-import static org.opennms.integration.api.v1.flows.Flow.Direction;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
@@ -39,11 +37,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opennms.netmgt.flows.api.Flow;
 import org.opennms.netmgt.telemetry.protocols.netflow.adapter.Utils;
 import org.opennms.netmgt.telemetry.protocols.netflow.adapter.common.NetflowMessage;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.InvalidPacketException;
+import org.opennms.netmgt.telemetry.protocols.netflow.parser.ie.InformationElementDatabase;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.netflow9.proto.Header;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.netflow9.proto.Packet;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.session.SequenceNumberTracker;
@@ -60,6 +60,13 @@ import io.netty.buffer.Unpooled;
  * This test validates netflow protobuf values against json output.
  */
 public class Netflow9ProtobufValidationTest {
+
+    private InformationElementDatabase database = new InformationElementDatabase(new org.opennms.netmgt.telemetry.protocols.netflow.parser.ipfix.InformationElementProvider(), new org.opennms.netmgt.telemetry.protocols.netflow.parser.netflow9.InformationElementProvider());
+
+    @BeforeClass
+    public static void beforeClass() {
+        System.setProperty("karaf.etc", "src/test/resources");
+    }
 
     @Test
     public void canValidateNetflow9FlowsWithJsonOutput() {
@@ -134,7 +141,7 @@ public class Netflow9ProtobufValidationTest {
             final Header header;
             try {
                 header = new Header(slice(buffer, Header.SIZE));
-                final Packet packet = new Packet(session, header, buffer);
+                final Packet packet = new Packet(database, session, header, buffer);
                 packet.getRecords().forEach(rec -> {
                     final FlowMessage flowMessage = new Netflow9MessageBuilder().buildMessage(rec, (address) -> Optional.empty()).build();
                     flows.add(new NetflowMessage(flowMessage, Instant.now()));

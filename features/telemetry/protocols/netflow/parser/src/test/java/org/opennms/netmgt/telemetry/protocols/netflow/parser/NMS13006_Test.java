@@ -23,7 +23,6 @@ package org.opennms.netmgt.telemetry.protocols.netflow.parser;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.opennms.netmgt.telemetry.listeners.utils.BufferUtils.slice;
 
 import java.net.InetAddress;
@@ -36,7 +35,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.opennms.netmgt.telemetry.protocols.netflow.parser.ie.InformationElementDatabase;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.ie.Value;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.ie.values.UnsignedValue;
 import org.opennms.netmgt.telemetry.protocols.netflow.parser.netflow9.proto.Header;
@@ -52,6 +53,12 @@ import io.netty.buffer.Unpooled;
 
 public class NMS13006_Test {
     private final static Path FOLDER = Paths.get("src/test/resources/flows");
+    private InformationElementDatabase database = new InformationElementDatabase(new org.opennms.netmgt.telemetry.protocols.netflow.parser.ipfix.InformationElementProvider(), new org.opennms.netmgt.telemetry.protocols.netflow.parser.netflow9.InformationElementProvider());
+
+    @BeforeClass
+    public static void beforeClass() {
+        System.setProperty("karaf.etc", "src/test/resources");
+    }
 
     @Test
     public void firstAndLastSwitchedTest() throws Exception {
@@ -102,7 +109,7 @@ public class NMS13006_Test {
 
             do {
                 final Header header = new Header(slice(buf, Header.SIZE));
-                final Packet packet = new Packet(session, header, buf);
+                final Packet packet = new Packet(database, session, header, buf);
 
                 final RecordEnrichment enrichment = (address -> Optional.empty());
 

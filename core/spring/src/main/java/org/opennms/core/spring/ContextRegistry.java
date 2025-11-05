@@ -78,9 +78,9 @@ public class ContextRegistry {
                 LOG.warn("No {} files found on classpath", BEAN_REF_CONTEXT_RESOURCE);
                 return;
             }
-            
-            LOG.debug("Found {} beanRefContext.xml files on classpath", resources.length);
-            
+    
+            LOG.debug("Found {} {} files on classpath", resources.length, BEAN_REF_CONTEXT_RESOURCE);
+
             // Create a parent factory to merge all definitions
             DefaultListableBeanFactory mergedFactory = new DefaultListableBeanFactory();
             XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(mergedFactory);

@@ -58,12 +58,14 @@ public final class FieldSpecifier implements Field {
     public final int fieldLength; // uint16
 
     public final InformationElement informationElement;
+    public final InformationElementDatabase informationElementDatabase;
 
-    public FieldSpecifier(final ByteBuf buffer) throws InvalidPacketException {
+    public FieldSpecifier(final InformationElementDatabase informationElementDatabase, final ByteBuf buffer) throws InvalidPacketException {
         this.fieldType = uint16(buffer);
         this.fieldLength = uint16(buffer);
 
-        this.informationElement = InformationElementDatabase.instance
+        this.informationElementDatabase = informationElementDatabase;
+        this.informationElement = informationElementDatabase
                 .lookup(Protocol.NETFLOW9, this.fieldType).orElseGet(() -> {
                     LOG.warn("Undeclared field type: {}", UndeclaredValue.nameFor(Optional.empty(), this.fieldType));
                     return UndeclaredValue.parser(this.fieldType);
@@ -80,7 +82,11 @@ public final class FieldSpecifier implements Field {
 
     @Override
     public Value<?> parse(final Session.Resolver resolver, final ByteBuf buffer) throws InvalidPacketException, MissingTemplateException {
-        return this.informationElement.parse(resolver, buffer);
+        try {
+            return this.informationElement.parse(informationElementDatabase, resolver, buffer);
+        } catch (final InvalidPacketException e) {
+            throw new InvalidPacketException(e, "Failed to parse Netflow9 information element: fieldType=%d", this.fieldType);
+        }
     }
 
     @Override

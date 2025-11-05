@@ -25,6 +25,10 @@ import vue from '@vitejs/plugin-vue'
 import svgLoader from 'vite-svg-loader'
 import AutoImport from 'unplugin-auto-import/vite'
 
+// for process.env.VITE_APP_LOGO_NAME in resolve.alias
+import dotenv from 'dotenv'
+dotenv.config()
+
 export default defineConfig({
   css: {
     preprocessorOptions: {
@@ -37,7 +41,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@/': new URL('./src/', import.meta.url).pathname,
-      '~@featherds': '@featherds'
+      '~@featherds': '@featherds',
+      './src/assets/ProductLogo.vue': `./src/assets/${process.env.VITE_APP_LOGO_NAME}.vue`
     },
     dedupe: ['vue']
   },
@@ -64,6 +69,7 @@ export default defineConfig({
     'process.env': process.env
   },
   test: {
+    dir: './tests',
     globals: true,
     environment: 'happy-dom',
     css: {
@@ -79,7 +85,21 @@ export default defineConfig({
       }
     }
   },
+  root: './src/main',
+  // make sure we get environment variables from .env files in the main ui directory
+  // path is relative to 'root' defined just above
+  envDir: '../..',
   build: {
-    target: 'esnext'
+    emptyOutDir: true,
+    outDir: './dist',
+    target: 'esnext',
+    copyPublicDir: false,
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name].[ext]'
+      }
+    }
   }
 })
